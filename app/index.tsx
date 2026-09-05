@@ -50,8 +50,8 @@ export default function Login() {
   const leaving = useRef(false);
 
   const sheetStyle = useAnimatedStyle(() => ({
-    opacity: cardOpacity.value,
-    transform: [{ translateY: cardLift.value }],
+    opacity: cardOpacity.get(),
+    transform: [{ translateY: cardLift.get() }],
   }));
 
   // No authentication yet — both buttons just navigate. `replace` rather than
@@ -64,11 +64,15 @@ export default function Login() {
   const signIn = () => {
     if (leaving.current) return;
     leaving.current = true;
+    // .set()/.get() rather than .value — the React Compiler (enabled in
+    // app.json) treats a plain assignment as mutating immutable state.
     const timing = { duration: 280, easing: Easing.out(Easing.cubic) };
-    cardLift.value = withTiming(24, timing);
-    cardOpacity.value = withTiming(0, timing, (finished) => {
-      if (finished) runOnJS(goToNextScreen)();
-    });
+    cardLift.set(withTiming(24, timing));
+    cardOpacity.set(
+      withTiming(0, timing, (finished) => {
+        if (finished) runOnJS(goToNextScreen)();
+      })
+    );
   };
 
   return (
