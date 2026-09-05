@@ -3,6 +3,7 @@ import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 import { base } from './_base';
 import { expenses } from './expenses';
+import { itemPeople } from './item-people';
 import { places } from './places';
 import { trips } from './trips';
 
@@ -16,6 +17,7 @@ export type ItemDetails =
       flightNumber?: string;
       confirmationCode?: string;
       seat?: string;
+      gate?: string;
       departureTerminal?: string;
       arrivalTerminal?: string;
       baggageAllowance?: string;
@@ -110,6 +112,7 @@ export const itemsRelations = relations(items, ({ one, many }) => ({
     relationName: 'toPlace',
   }),
   expenses: many(expenses),
+  people: many(itemPeople),
 }));
 
 export type Item = typeof items.$inferSelect;

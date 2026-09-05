@@ -2,7 +2,7 @@ const { hairlineWidth } = require('nativewind/theme');
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  darkMode: 'class',
+  // Landfall is a light-only design (see global.css) — no dark: variants.
   content: ['./app/**/*.{ts,tsx}', './components/**/*.{ts,tsx}'],
   presets: [require('nativewind/preset')],
   theme: {
@@ -13,6 +13,12 @@ module.exports = {
         ring: 'hsl(var(--ring))',
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
+        subtle: 'hsl(var(--subtle))',
+        well: 'hsl(var(--well))',
+        paper: {
+          DEFAULT: 'hsl(var(--paper))',
+          foreground: 'hsl(var(--paper-foreground))',
+        },
         primary: {
           DEFAULT: 'hsl(var(--primary))',
           foreground: 'hsl(var(--primary-foreground))',
@@ -41,33 +47,56 @@ module.exports = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
+        // Categorical signals — one per timeline row, never two.
+        transit: {
+          DEFAULT: 'hsl(var(--transit))',
+          muted: 'hsl(var(--transit-muted))',
+          strong: 'hsl(var(--transit-strong))',
+        },
+        stay: {
+          DEFAULT: 'hsl(var(--stay))',
+          muted: 'hsl(var(--stay-muted))',
+        },
+        place: {
+          DEFAULT: 'hsl(var(--place))',
+          muted: 'hsl(var(--place-muted))',
+          strong: 'hsl(var(--place-strong))',
+        },
+        settled: {
+          DEFAULT: 'hsl(var(--settled))',
+          muted: 'hsl(var(--settled-muted))',
+          strong: 'hsl(var(--settled-strong))',
+        },
+        owed: {
+          DEFAULT: 'hsl(var(--owed))',
+          muted: 'hsl(var(--owed-muted))',
+          strong: 'hsl(var(--owed-strong))',
+        },
+      },
+      fontFamily: {
+        display: ['SpaceGrotesk_600SemiBold'],
+        'display-medium': ['SpaceGrotesk_500Medium'],
+        body: ['Inter_400Regular'],
+        'body-medium': ['Inter_500Medium'],
+        'body-semibold': ['Inter_600SemiBold'],
+        mono: ['JetBrainsMono_500Medium'],
+        hand: ['Caveat_500Medium'],
       },
       borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
+        sm: '8px',
+        DEFAULT: '12px',
+        md: '14px',
+        lg: '16px',
+        xl: '18px',
+        '2xl': '20px',
+        '3xl': '22px',
+        '4xl': '26px',
+        '5xl': '32px',
       },
       borderWidth: {
         hairline: hairlineWidth(),
       },
-      keyframes: {
-        'accordion-down': {
-          from: { height: '0' },
-          to: { height: 'var(--radix-accordion-content-height)' },
-        },
-        'accordion-up': {
-          from: { height: 'var(--radix-accordion-content-height)' },
-          to: { height: '0' },
-        },
-      },
-      animation: {
-        'accordion-down': 'accordion-down 0.2s ease-out',
-        'accordion-up': 'accordion-up 0.2s ease-out',
-      },
     },
   },
-  future: {
-    hoverOnlyWhenSupported: true,
-  },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [],
 };

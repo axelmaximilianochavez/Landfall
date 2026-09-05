@@ -6,6 +6,7 @@ import { expenses } from './expenses';
 import { items } from './items';
 import { people } from './people';
 import { places } from './places';
+import { segments } from './segments';
 
 export const trips = sqliteTable(
   'trips',
@@ -32,6 +33,7 @@ export const trips = sqliteTable(
 );
 
 export const tripsRelations = relations(trips, ({ many }) => ({
+  segments: many(segments),
   people: many(people),
   places: many(places),
   items: many(items),

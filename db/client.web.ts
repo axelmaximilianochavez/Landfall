@@ -20,6 +20,9 @@ export const DATABASE_NAME = 'landfall.db';
 
 export const isDatabaseAvailable = false;
 
+/** No raw connection on web. Mirrors client.ts so imports resolve either way. */
+export const sqliteDb = null;
+
 const unavailable = () => {
   throw new Error(
     'The database is not available on web. drizzle-orm/expo-sqlite requires ' +

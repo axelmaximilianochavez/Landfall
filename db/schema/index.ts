@@ -36,8 +36,10 @@
  */
 
 export * from './trips';
+export * from './segments';
 export * from './people';
 export * from './places';
 export * from './items';
+export * from './item-people';
 export * from './expenses';
 export * from './expense-shares';

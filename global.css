@@ -2,57 +2,67 @@
 @tailwind components;
 @tailwind utilities;
 
+/**
+ * Landfall — colours from the design canvas (Landfall.dc.html, artboard 1a).
+ *
+ * The palette is light-only by design: #14161A ("Ink") is a CTA and text
+ * colour, not a dark-theme surface. Accents are categorical, never decorative
+ * — blue is something you catch, amber is somewhere you sleep, orange is
+ * somewhere you chose to go, and money is green settled / red outstanding.
+ *
+ * HSL triplets (no hsl() wrapper) so Tailwind can apply opacity modifiers.
+ */
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
+    /* Surfaces */
+    --background: 60 20% 98%;      /* #FAFAF7  page */
+    --card: 0 0% 100%;             /* #FFFFFF  card */
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
-    --destructive: 0 84.2% 60.2%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 63%;
-    --radius: 0.625rem;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-  }
+    --well: 40 18% 93%;            /* #F1EFE9  raised well / inner pill */
+    --paper: 41 45% 94%;           /* #F5F1E8  field-notes surface */
 
-  .dark:root {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 70.9% 59.4%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 300 0% 45%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    /* Ink — text and the primary CTA */
+    --foreground: 220 12% 9%;      /* #14161A  graphite-900 */
+    --card-foreground: 220 12% 9%;
+    --popover-foreground: 220 12% 9%;
+    --primary: 220 12% 9%;         /* #14161A  CTA fill */
+    --primary-foreground: 47 33% 96%; /* #F7F5EE bone-50 */
+
+    --secondary: 40 18% 93%;       /* #F1EFE9 */
+    --secondary-foreground: 222 6% 36%;
+    --muted: 40 18% 93%;
+    --muted-foreground: 222 6% 36%;   /* #555861 graphite-500 */
+    --subtle: 220 5% 56%;             /* #8A8D95 graphite-300 */
+    --accent: 40 18% 93%;
+    --accent-foreground: 220 12% 9%;
+
+    /* Hairlines and fields */
+    --border: 44 20% 87%;          /* #E4E1D8  day-300 */
+    --input: 42 18% 82%;           /* #D8D4C9  field border */
+    --ring: 214 71% 58%;           /* #4A8EE0 */
+
+    /* Categorical signals */
+    --transit: 214 71% 58%;        /* #4A8EE0  flights, trains */
+    --transit-muted: 213 71% 95%;  /* #EAF2FC */
+    --transit-strong: 212 61% 46%; /* #2F6FBD */
+    --stay: 38 84% 45%;            /* #D68A12  hotels */
+    --stay-muted: 41 76% 92%;      /* #FBF0DC */
+    --place: 15 100% 62%;          /* #FF6A3D  places, pins, settle CTA */
+    --place-muted: 17 100% 95%;    /* #FFEDE6 */
+    --place-strong: 18 76% 44%;    /* #C74A1C */
+    --settled: 141 65% 58%;        /* #4FD977 */
+    --settled-muted: 141 55% 94%;  /* #E7F8ED */
+    --settled-strong: 145 50% 36%; /* #2E8A50 */
+    --owed: 0 100% 65%;            /* #FF4D4D */
+    --owed-muted: 0 71% 96%;       /* #FDECEC */
+    --owed-strong: 0 54% 51%;      /* #C93B3B */
+
+    /* Ink on paper surfaces */
+    --paper-foreground: 48 12% 33%; /* #5F5A4A */
+
+    --destructive: 0 54% 51%;
+    --destructive-foreground: 47 33% 96%;
+
+    --radius: 14px;
   }
 }
