@@ -9,20 +9,20 @@ import { Input } from '@/components/ui/input';
 import { Text } from '@/components/ui/text';
 import { initialOf, personColor } from '@/components/ui/avatar-stack';
 import { isDatabaseAvailable } from '@/db';
-import { createTrip, type NewCountry } from '@/db/queries/trips';
+import { createTrip, type NewDestination } from '@/db/queries/trips';
 
 export default function NewTrip() {
   const [title, setTitle] = useState('');
   const [startDate, setStartDate] = useState<string | null>(null);
   const [endDate, setEndDate] = useState<string | null>(null);
-  const [countries, setCountries] = useState<NewCountry[]>([]);
+  const [destinations, setDestinations] = useState<NewDestination[]>([]);
   const [companions, setCompanions] = useState<string[]>([]);
   const [companionDraft, setCompanionDraft] = useState('');
 
   const canSave = isDatabaseAvailable && title.trim().length > 0;
 
-  const patchCountry = (index: number, patch: Partial<NewCountry>) =>
-    setCountries((prev) => prev.map((c, i) => (i === index ? { ...c, ...patch } : c)));
+  const patchDestination = (index: number, patch: Partial<NewDestination>) =>
+    setDestinations((prev) => prev.map((d, i) => (i === index ? { ...d, ...patch } : d)));
 
   const addCompanion = () => {
     const name = companionDraft.trim();
@@ -37,7 +37,7 @@ export default function NewTrip() {
       title: title.trim(),
       startDate,
       endDate,
-      countries: countries.filter((c) => c.name.trim().length > 0),
+      destinations: destinations.filter((d) => d.name.trim().length > 0),
       companions,
     });
     // Straight into the trip you just made, and replace so Back returns to the list.
@@ -56,7 +56,7 @@ export default function NewTrip() {
               New trip
             </Text>
             <Text variant="bodySm" className="text-muted-foreground text-[13.5px]">
-              Countries first — the timeline builds around them.
+              Destinations first — the timeline builds around them.
             </Text>
           </View>
 
@@ -66,28 +66,31 @@ export default function NewTrip() {
           </View>
 
           <View className="flex-row gap-3">
-            <DateField label="Start" value={startDate} onChange={setStartDate} />
-            <DateField label="End" value={endDate} onChange={setEndDate} />
+            <DateField label="Start" value={startDate} onChange={setStartDate} max={endDate} />
+            <DateField label="End" value={endDate} onChange={setEndDate} min={startDate} />
           </View>
 
           <View className="gap-[9px]">
-            <Text variant="label">Countries · in order</Text>
-            {countries.map((country, index) => (
+            <View className="gap-[3px]">
+              <Text variant="label">Destinations · in order</Text>
+              <Text variant="caption">A country, a city, or a single neighbourhood.</Text>
+            </View>
+            {destinations.map((destination, index) => (
               <View key={index} className="bg-card gap-3 rounded-md p-4">
                 <View className="flex-row items-center gap-3">
                   <Text variant="mono" className="text-subtle text-[11px]">
                     {String(index + 1).padStart(2, '0')}
                   </Text>
                   <Input
-                    value={country.name}
-                    onChangeText={(name) => patchCountry(index, { name })}
-                    placeholder="Japan"
+                    value={destination.name}
+                    onChangeText={(name) => patchDestination(index, { name })}
+                    placeholder="Tokyo"
                     className="flex-1 border-0 bg-transparent px-0 py-0"
                   />
                   <Pressable
-                    onPress={() => setCountries((prev) => prev.filter((_, i) => i !== index))}
+                    onPress={() => setDestinations((prev) => prev.filter((_, i) => i !== index))}
                     accessibilityRole="button"
-                    accessibilityLabel={`Remove ${country.name || 'country'}`}
+                    accessibilityLabel={`Remove ${destination.name || 'destination'}`}
                   >
                     <Text className="text-subtle text-[18px]">×</Text>
                   </Pressable>
@@ -95,23 +98,27 @@ export default function NewTrip() {
                 <View className="flex-row gap-3">
                   <DateField
                     label="From"
-                    value={country.startDate ?? null}
-                    onChange={(startDate) => patchCountry(index, { startDate })}
+                    value={destination.startDate ?? null}
+                    onChange={(startDate) => patchDestination(index, { startDate })}
+                    min={startDate}
+                    max={endDate}
                   />
                   <DateField
                     label="To"
-                    value={country.endDate ?? null}
-                    onChange={(endDate) => patchCountry(index, { endDate })}
+                    value={destination.endDate ?? null}
+                    onChange={(endDate) => patchDestination(index, { endDate })}
+                    min={destination.startDate ?? startDate}
+                    max={endDate}
                   />
                 </View>
               </View>
             ))}
             <Pressable
-              onPress={() => setCountries((prev) => [...prev, { name: '' }])}
+              onPress={() => setDestinations((prev) => [...prev, { name: '' }])}
               accessibilityRole="button"
               className="border-input items-center rounded-md border border-dashed px-4 py-[14px] active:opacity-70"
             >
-              <Text className="font-body-medium text-subtle text-[14px]">+ Add country</Text>
+              <Text className="font-body-medium text-subtle text-[14px]">+ Add destination</Text>
             </Pressable>
           </View>
 

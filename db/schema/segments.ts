@@ -5,8 +5,13 @@ import { base } from './_base';
 import { trips } from './trips';
 
 /**
- * A country leg of a trip, in visiting order — the "Countries · in order" list
- * on the New trip screen, and the pills above the timeline.
+ * A destination on the trip, in visiting order — the "Destinations · in order"
+ * list on the New trip screen, and the pills above the timeline.
+ *
+ * Deliberately not "country": a destination can be a country, a city, or a
+ * single neighbourhood, so a weekend in two districts of Tokyo works the same
+ * way as a two-country trip. countryCode stays optional for the cases where
+ * one applies.
  *
  * Items are grouped under a segment by comparing dates rather than carrying a
  * segment FK: an item's date already decides which leg it falls in, and a FK
@@ -20,7 +25,7 @@ export const segments = sqliteTable(
       .notNull()
       .references(() => trips.id, { onDelete: 'cascade' }),
 
-    name: text('name').notNull(), // 'Japan'
+    name: text('name').notNull(), // 'Japan', 'Tokyo', 'Shibuya'
     countryCode: text('country_code'), // ISO 3166-1 alpha-2
 
     // Local dates, 'YYYY-MM-DD' — calendar facts, like trips.startDate.

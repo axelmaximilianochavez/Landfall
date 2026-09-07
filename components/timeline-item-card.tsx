@@ -1,4 +1,5 @@
-import { View } from 'react-native';
+import * as Haptics from 'expo-haptics';
+import { Pressable, View } from 'react-native';
 
 import { Text } from '@/components/ui/text';
 import type { TimelineItem } from '@/db/queries/trip';
@@ -18,7 +19,15 @@ const KIND: Record<ItemKind, { label: string; dot: string; text: string; card: s
   activity: { label: 'PLACE', dot: 'bg-place', text: 'text-place', card: 'bg-paper' },
 };
 
-export function TimelineItemCard({ item }: { item: TimelineItem }) {
+export function TimelineItemCard({
+  item,
+  onPress,
+  onLongPress,
+}: {
+  item: TimelineItem;
+  onPress?: () => void;
+  onLongPress?: () => void;
+}) {
   const kind = KIND[item.kind];
   const details = item.details;
   const tag =
@@ -46,7 +55,28 @@ export function TimelineItemCard({ item }: { item: TimelineItem }) {
         <View className={cn('absolute -left-1 top-[17px] h-[10px] w-[10px] rounded-full', kind.dot)} />
       </View>
 
-      <View className={cn('flex-1 gap-[5px] rounded-lg p-[14px]', kind.card)}>
+      <Pressable
+        onPress={onPress}
+        onLongPress={
+          onLongPress
+            ? () => {
+                // A tick of feedback, so the press registers before the screen moves.
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+                onLongPress();
+              }
+            : undefined
+        }
+        // 500ms is the platform standard for a long press; a full second reads
+        // as the app having missed the gesture.
+        delayLongPress={500}
+        accessibilityRole={onPress || onLongPress ? 'button' : undefined}
+        accessibilityHint={onLongPress ? 'Long press to edit' : undefined}
+        className={cn(
+          'flex-1 gap-[5px] rounded-lg p-[14px]',
+          kind.card,
+          (onPress || onLongPress) && 'active:opacity-80'
+        )}
+      >
         <View className="flex-row items-center gap-2">
           <Text variant="monoSm" className={kind.text}>
             {kind.label}
@@ -59,7 +89,7 @@ export function TimelineItemCard({ item }: { item: TimelineItem }) {
             {subtitle}
           </Text>
         ) : null}
-      </View>
+      </Pressable>
     </View>
   );
 }

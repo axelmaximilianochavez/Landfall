@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
  * outline  — white on a #D8D4C9 hairline ("Open in Maps")
  * pill     — well-filled chip, fully round ("Filter")
  * settle   — the one orange CTA, money only ("Settle up")
+ * destructive — soft red, for removals. Same tokens as the "You owe" badge.
  * onInk    — bone fill, for use on ink surfaces
  * fab      — 52px round ink circle
  */
@@ -31,6 +32,7 @@ const buttonVariants = cva(
         ),
         pill: cn('bg-well rounded-full', Platform.select({ web: 'hover:opacity-80' })),
         settle: cn('bg-place rounded-md', Platform.select({ web: 'hover:opacity-90' })),
+        destructive: cn('bg-owed-muted rounded-md', Platform.select({ web: 'hover:opacity-90' })),
         onInk: cn('bg-primary-foreground rounded-full', Platform.select({ web: 'hover:opacity-90' })),
         ghost: cn('rounded-md', Platform.select({ web: 'hover:bg-well' })),
         fab: 'bg-primary h-[52px] w-[52px] rounded-full',
@@ -58,6 +60,7 @@ const buttonTextVariants = cva('font-body-semibold text-[15px]', {
       outline: 'text-foreground',
       pill: 'font-body-medium text-foreground text-[14px]',
       settle: 'text-white',
+      destructive: 'text-owed-strong',
       onInk: 'text-foreground',
       ghost: 'text-foreground',
       fab: 'text-primary-foreground text-[26px]',

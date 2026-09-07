@@ -2,14 +2,14 @@ import type { Person, Trip } from '../schema';
 
 export type TripWithPeople = Trip & { people: Person[] };
 export type TripsResult = { data: TripWithPeople[]; error?: Error };
-export type NewCountry = { name: string; startDate?: string | null; endDate?: string | null };
+export type NewDestination = { name: string; startDate?: string | null; endDate?: string | null };
 
 export type NewTripInput = {
   title: string;
   startDate?: string | null;
   endDate?: string | null;
   baseCurrency?: string;
-  countries?: NewCountry[];
+  destinations?: NewDestination[];
   companions?: string[];
 };
 
@@ -21,5 +21,11 @@ export function useTrips(): TripsResult {
 export function createTrip(_input: NewTripInput): string {
   throw new Error(
     'Cannot create a trip on web: the database is unavailable there. Run on iOS or Android.'
+  );
+}
+
+export function deleteTrip(_tripId: string): void {
+  throw new Error(
+    'Cannot delete a trip on web: the database is unavailable there. Run on iOS or Android.'
   );
 }

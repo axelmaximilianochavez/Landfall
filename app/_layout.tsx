@@ -65,6 +65,10 @@ export default function RootLayout() {
       <Stack.Screen name="trip/[id]/index" />
       <Stack.Screen name="trip/new" options={{ presentation: 'modal' }} />
       <Stack.Screen name="trip/[id]/add" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="trip/[id]/item/[itemId]" />
+      <Stack.Screen name="trip/[id]/edit/[itemId]" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="trip/[id]/expense/new" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="j/[code]" />
     </Stack>
   );
 }

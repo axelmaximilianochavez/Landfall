@@ -1,9 +1,9 @@
-import { desc, isNull } from 'drizzle-orm';
-import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
+import { desc, eq, getTableName, isNull } from 'drizzle-orm';
 
 import { newId } from '@/lib/id';
 
 import { db } from '../client';
+import { useLiveTables } from '../live';
 import { people, segments, trips, type Person, type Trip } from '../schema';
 
 export type TripWithPeople = Trip & { people: Person[] };
@@ -15,26 +15,32 @@ export type TripsResult = { data: TripWithPeople[]; error?: Error };
  * Filters soft-deleted rows. Not filtered by account yet: trips.ownerUserId is
  * null while the app is local-only, so every trip on this device is "mine".
  */
+// Watches people too, so the avatar stack updates when travellers change.
+const TRIPS_TABLES = [trips, people].map(getTableName);
+
 export function useTrips(): TripsResult {
-  const { data, error } = useLiveQuery(
-    db.query.trips.findMany({
-      where: isNull(trips.deletedAt),
-      orderBy: [desc(trips.createdAt)],
-      with: { people: true },
-    })
+  const { data, error } = useLiveTables(
+    () =>
+      db.query.trips.findMany({
+        where: isNull(trips.deletedAt),
+        orderBy: [desc(trips.createdAt)],
+        with: { people: true },
+      }),
+    TRIPS_TABLES
   );
   return { data: (data ?? []) as TripWithPeople[], error };
 }
 
-export type NewCountry = { name: string; startDate?: string | null; endDate?: string | null };
+/** A leg of the trip: a country, a city, or a single neighbourhood. */
+export type NewDestination = { name: string; startDate?: string | null; endDate?: string | null };
 
 export type NewTripInput = {
   title: string;
   startDate?: string | null;
   endDate?: string | null;
   baseCurrency?: string;
-  /** Country legs in visiting order. */
-  countries?: NewCountry[];
+  /** Destinations in visiting order. */
+  destinations?: NewDestination[];
   /** Names of the people coming along, besides you. */
   companions?: string[];
 };
@@ -54,7 +60,7 @@ export function createTrip({
   startDate = null,
   endDate = null,
   baseCurrency,
-  countries = [],
+  destinations = [],
   companions = [],
 }: NewTripInput): string {
   const tripId = newId();
@@ -72,14 +78,14 @@ export function createTrip({
       tx.insert(people).values({ id: newId(), tripId, displayName: name }).run();
     }
 
-    countries.forEach((country, index) => {
+    destinations.forEach((destination, index) => {
       tx.insert(segments)
         .values({
           id: newId(),
           tripId,
-          name: country.name,
-          startDate: country.startDate ?? null,
-          endDate: country.endDate ?? null,
+          name: destination.name,
+          startDate: destination.startDate ?? null,
+          endDate: destination.endDate ?? null,
           sortOrder: index,
         })
         .run();
@@ -87,4 +93,19 @@ export function createTrip({
   });
 
   return tripId;
+}
+
+/**
+ * Soft-deletes a trip, taking everything inside it out of the app with it.
+ *
+ * Only the trip row is touched: every read of items, people, segments and
+ * expenses goes through the trip, so once it is out of `useTrips` and
+ * `useTrip` none of them are reachable. That is also the only way this can be
+ * one statement — the child tables are `ON DELETE RESTRICT`, so a hard delete
+ * would have to unwind them in dependency order and would be unrecoverable if
+ * it stopped halfway. The rows stay on disk for a future sync to propagate,
+ * exactly as `deleteItem` leaves them.
+ */
+export function deleteTrip(tripId: string): void {
+  db.update(trips).set({ deletedAt: new Date() }).where(eq(trips.id, tripId)).run();
 }

@@ -4,14 +4,24 @@ import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
+import { LandfallLogo } from '@/components/landfall-logo';
+import { InviteLinkCard } from '@/components/invite-link-card';
+import { BalancesCard } from '@/components/balances-card';
+import { ExpenseList } from '@/components/expense-list';
+import { MoneySummary } from '@/components/money-summary';
+import { PersonRow } from '@/components/person-row';
+import { PersonSheet } from '@/components/person-sheet';
 import { TimelineItemCard } from '@/components/timeline-item-card';
 import { TripTabBar, type TripTab } from '@/components/trip-tab-bar';
-import { AvatarStack } from '@/components/ui/avatar-stack';
+import { AvatarStack, personColor } from '@/components/ui/avatar-stack';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
-import { useTrip } from '@/db/queries/trip';
+import { invitePerson, resendInvite, useTrip } from '@/db/queries/trip';
 import { formatTripDates } from '@/lib/date';
+import { currencySymbol } from '@/lib/money';
+import { displayNameOf, initialOfPerson } from '@/lib/person';
 import { groupTimeline } from '@/lib/timeline';
+import { cn } from '@/lib/utils';
 
 function BackButton() {
   return (
@@ -35,21 +45,12 @@ function BackButton() {
   );
 }
 
-function Placeholder({ title, body }: { title: string; body: string }) {
-  return (
-    <View className="bg-card items-center gap-2 rounded-lg px-6 py-[34px]">
-      <Text variant="title">{title}</Text>
-      <Text variant="bodySm" className="text-muted-foreground max-w-[240px] text-center">
-        {body}
-      </Text>
-    </View>
-  );
-}
-
 export default function TripDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { trip, error } = useTrip(id);
   const [tab, setTab] = useState<TripTab>('timeline');
+  // Id of the person whose invite sheet is open, or null when closed.
+  const [invitingId, setInvitingId] = useState<string | null>(null);
 
   if (error || !trip) {
     return (
@@ -66,36 +67,20 @@ export default function TripDetail() {
 
   const names = trip.people.map((p) => p.displayName);
   const groups = groupTimeline(trip.items, trip.segments);
+  const selfId = trip.people.find((p) => p.isSelf)?.id;
 
   return (
     <View className="bg-background flex-1">
       <SafeAreaView edges={['top']} className="flex-1">
-        <View className="border-border gap-[14px] border-b px-5 pb-3 pt-2">
-          <View className="flex-row items-center gap-3">
-            <BackButton />
-            <View className="flex-1 gap-[2px]">
-              <Text variant="h3">{trip.title}</Text>
-              <Text variant="caption">
-                {formatTripDates(trip.startDate, trip.endDate)} · totals in {trip.baseCurrency}
-              </Text>
-            </View>
-            <AvatarStack names={names} size={28} ringClassName="border-background" />
+        <View className="border-border flex-row items-center gap-3 border-b px-5 pb-3 pt-2">
+          <BackButton />
+          <View className="flex-1 gap-[2px]">
+            <Text variant="h3">{trip.title}</Text>
+            <Text variant="caption">
+              {formatTripDates(trip.startDate, trip.endDate)} · totals in {trip.baseCurrency}
+            </Text>
           </View>
-
-          {tab === 'timeline' && trip.segments.length ? (
-            <View className="flex-row gap-2">
-              {trip.segments.map((segment) => (
-                <View key={segment.id} className="bg-card flex-1 gap-[3px] rounded-md px-[14px] py-[11px]">
-                  <Text variant="subtitle" className="text-[14px] leading-[14px]">
-                    {segment.name}
-                  </Text>
-                  <Text variant="monoSm">
-                    {segment.startDate ? formatTripDates(segment.startDate, segment.endDate) : '—'}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          ) : null}
+          <AvatarStack names={names} size={28} ringClassName="border-background" />
         </View>
 
         <ScrollView contentContainerClassName="px-5 pb-6 pt-[18px] gap-[22px]">
@@ -122,7 +107,12 @@ export default function TripDetail() {
                         {day.label}
                       </Text>
                       {day.items.map((item) => (
-                        <TimelineItemCard key={item.id} item={item} />
+                        <TimelineItemCard
+                          key={item.id}
+                          item={item}
+                          onPress={() => router.push(`/trip/${trip.id}/item/${item.id}`)}
+                          onLongPress={() => router.push(`/trip/${trip.id}/edit/${item.id}`)}
+                        />
                       ))}
                     </View>
                   ))}
@@ -147,39 +137,143 @@ export default function TripDetail() {
             )
           ) : null}
 
-          {tab === 'places' ? (
-            <Placeholder
-              title="Places"
-              body="Saved places and the trip map land here next."
-            />
+          {tab === 'people' ? (
+            <View className="gap-4">
+              <View className="gap-[3px]">
+                <Text variant="h2">People</Text>
+                <Text variant="bodySm" className="text-muted-foreground">
+                  Everyone here can add items and log spend.
+                </Text>
+              </View>
+
+              <View className="gap-2">
+                {trip.people.map((person, index) => (
+                  <PersonRow
+                    key={person.id}
+                    person={person}
+                    index={index}
+                    onSend={() => setInvitingId(person.id)}
+                    onResend={() => resendInvite(person.id)}
+                  />
+                ))}
+              </View>
+
+              <InviteLinkCard tripId={trip.id} tripTitle={trip.title} />
+            </View>
           ) : null}
 
           {tab === 'money' ? (
-            <Placeholder
-              title="Money"
-              body="Trip totals, per-person balances and Settle up land here next."
-            />
-          ) : null}
-
-          {tab === 'you' ? (
             <View className="gap-4">
-              <View className="bg-card flex-row items-center gap-[14px] rounded-2xl p-5">
-                <AvatarStack names={names.slice(0, 1)} size={52} />
-                <View className="gap-[3px]">
-                  <Text variant="h3" className="text-[19px]">
-                    {names[0] ?? 'You'}
-                  </Text>
-                  <Text variant="caption">{trip.people.length} on this trip</Text>
-                </View>
-              </View>
-              <Placeholder
-                title="Settings"
-                body="Home currency, maps app and departure alerts land here next."
+              <MoneySummary
+                expenses={trip.expenses}
+                segments={trip.segments}
+                baseCurrency={trip.baseCurrency}
+                selfPersonId={selfId}
+                peopleCount={trip.people.length}
               />
+
+              {trip.expenses.length === 0 ? (
+                <View className="bg-card items-center gap-3 rounded-lg px-6 py-[34px]">
+                  <View className="opacity-35">
+                    <LandfallLogo size={40} />
+                  </View>
+                  <Text variant="title">No expenses yet</Text>
+                  <Text
+                    variant="bodySm"
+                    className="text-muted-foreground max-w-[250px] text-center leading-[19px]"
+                  >
+                    Log what anyone spends and Landfall keeps the split and the running total.
+                    Nobody has to hold the receipts.
+                  </Text>
+                  <Button
+                    className="mt-1 rounded-[12px] px-[22px] py-3"
+                    onPress={() => router.push(`/trip/${trip.id}/expense/new`)}
+                  >
+                    <Text className="text-[14px]">Add first expense</Text>
+                  </Button>
+                </View>
+              ) : null}
+
+              {trip.expenses.length === 0 ? (
+                <View className="bg-paper gap-3 rounded-xl p-4">
+                  <Text variant="monoSm" className="text-paper-foreground">
+                    SPLITTING WITH
+                  </Text>
+                  <View className="flex-row flex-wrap gap-2">
+                    {trip.people.map((person, index) => (
+                      <View
+                        key={person.id}
+                        className="bg-card flex-row items-center gap-2 rounded-full py-[6px] pl-[6px] pr-[14px]"
+                      >
+                        <View
+                          className={cn(
+                            'h-6 w-6 items-center justify-center rounded-full',
+                            personColor(index)
+                          )}
+                        >
+                          <Text
+                            className={cn(
+                              'font-body-semibold text-[11px]',
+                              index === 0 ? 'text-primary-foreground' : 'text-white'
+                            )}
+                          >
+                            {initialOfPerson(person)}
+                          </Text>
+                        </View>
+                        <Text className="font-body-medium text-[13.5px]">
+                          {person.isSelf ? 'You' : displayNameOf(person)}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                  <View className="border-border border-t" />
+                  <View className="flex-row items-center justify-between">
+                    <Text className="font-body-medium text-[13.5px]">Show totals in</Text>
+                    <Text variant="mono" className="text-[13.5px]">
+                      {trip.baseCurrency} · {currencySymbol(trip.baseCurrency)}
+                    </Text>
+                  </View>
+                </View>
+              ) : (
+                <>
+                  <BalancesCard
+                    people={trip.people}
+                    expenses={trip.expenses}
+                    baseCurrency={trip.baseCurrency}
+                  />
+                  <ExpenseList
+                    expenses={trip.expenses}
+                    people={trip.people}
+                    baseCurrency={trip.baseCurrency}
+                    selfPersonId={selfId}
+                  />
+                </>
+              )}
             </View>
           ) : null}
         </ScrollView>
       </SafeAreaView>
+
+      {tab === 'money' ? (
+        <View className="border-border bg-background/95 flex-row gap-3 border-t px-5 pb-3 pt-3">
+          <Button
+            className="flex-1"
+            size="sm"
+            onPress={() => router.push(`/trip/${trip.id}/expense/new`)}
+          >
+            <Text className="text-[15px]">Add expense</Text>
+          </Button>
+          <Button
+            className="flex-1"
+            variant={trip.expenses.length ? 'settle' : 'outline'}
+            size="sm"
+            disabled={trip.expenses.length === 0}
+            onPress={() => {}}
+          >
+            <Text className="text-[15px]">Settle up</Text>
+          </Button>
+        </View>
+      ) : null}
 
       {/* Floating add button, on every tab (design canvas 1b). */}
       {tab === 'timeline' ? (
@@ -195,6 +289,16 @@ export default function TripDetail() {
       ) : null}
 
       <TripTabBar active={tab} onChange={setTab} />
+
+      <PersonSheet
+        visible={!!invitingId}
+        personName={trip.people.find((p) => p.id === invitingId)?.displayName}
+        onCancel={() => setInvitingId(null)}
+        onSubmit={(email) => {
+          if (invitingId) invitePerson(invitingId, email);
+          setInvitingId(null);
+        }}
+      />
     </View>
   );
 }

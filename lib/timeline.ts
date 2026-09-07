@@ -24,11 +24,18 @@ export function formatItemTime(item: TimelineItem): string {
   return `${h}:${min}`;
 }
 
-function withinSegment(day: string, segment: Segment): boolean {
+/** Whether a 'YYYY-MM-DD' day falls inside a destination's range. */
+export function isWithinSegment(day: string, segment: Segment): boolean {
   if (!segment.startDate && !segment.endDate) return false;
   if (segment.startDate && day < segment.startDate) return false;
   if (segment.endDate && day > segment.endDate) return false;
   return true;
+}
+
+/** The destination a date would fall into, for pre-selecting on the add screen. */
+export function segmentForDate(day: string | null, segments: Segment[]): Segment | null {
+  if (!day) return null;
+  return segments.find((segment) => isWithinSegment(day, segment)) ?? null;
 }
 
 function toDays(items: TimelineItem[]): DayGroup[] {
@@ -49,7 +56,7 @@ function toDays(items: TimelineItem[]): DayGroup[] {
 }
 
 /**
- * Groups timeline items under their country leg, then by day.
+ * Groups timeline items under their destination, then by day.
  *
  * Membership is decided by comparing an item's date to each segment's range,
  * rather than by a stored FK — the date already answers the question, and a FK
@@ -62,8 +69,12 @@ export function groupTimeline(items: TimelineItem[], segments: Segment[]): Timel
   for (const segment of segments) {
     const mine: TimelineItem[] = [];
     for (const item of remaining) {
+      if (item.segmentId) {
+        if (item.segmentId === segment.id) mine.push(item);
+        continue;
+      }
       if (!item.startAt) continue;
-      if (withinSegment(toISODate(item.startAt), segment)) mine.push(item);
+      if (isWithinSegment(toISODate(item.startAt), segment)) mine.push(item);
     }
     mine.forEach((item) => remaining.delete(item));
 
@@ -87,13 +98,13 @@ export function groupTimeline(items: TimelineItem[], segments: Segment[]): Timel
     groups.push({
       key: '__ungrouped',
       // No header when there are no segments at all — the days stand alone.
-      name: segments.length ? 'Not in a country leg' : null,
+      name: segments.length ? 'Not in a destination' : null,
       meta: '',
       days: toDays(leftovers),
     });
   }
 
   // Declared legs are kept even when empty: "the timeline builds around them",
-  // so a country you have not planned yet still has to show up and say so.
+  // so a destination you have not planned yet still has to show up and say so.
   return groups;
 }

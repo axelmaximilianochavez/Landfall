@@ -43,3 +43,60 @@ export function daysUntil(iso: string | null): number | null {
   const diff = Math.round((fromISODate(iso).getTime() - today.getTime()) / 86_400_000);
   return diff > 0 ? diff : null;
 }
+
+/**
+ * The date a bounded picker should open on.
+ *
+ * Handing a native picker a value outside its own [min, max] is undefined
+ * behaviour on Android, so the result is always clamped into range. With no
+ * value yet it opens on `min` — that is what makes the picker land on the
+ * month you are travelling instead of the current month.
+ */
+export function initialPickerDate(
+  value: string | null,
+  min: string | null,
+  max: string | null,
+  today: Date = new Date()
+): Date {
+  let date = value ? fromISODate(value) : min ? fromISODate(min) : today;
+  if (min && date < fromISODate(min)) date = fromISODate(min);
+  if (max && date > fromISODate(max)) date = fromISODate(max);
+  return date;
+}
+
+const MINUTE = 60_000;
+const HOUR = 60 * MINUTE;
+const DAY = 24 * HOUR;
+
+/** "just now", "3 hours ago", "2 days ago" — for invite timestamps. */
+export function formatRelativeTime(date: Date, now: Date = new Date()): string {
+  const diff = now.getTime() - date.getTime();
+  if (diff < 0) return 'just now';
+  if (diff < MINUTE) return 'just now';
+  if (diff < HOUR) {
+    const mins = Math.floor(diff / MINUTE);
+    return `${mins} minute${mins === 1 ? '' : 's'} ago`;
+  }
+  if (diff < DAY) {
+    const hours = Math.floor(diff / HOUR);
+    return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+  }
+  const days = Math.floor(diff / DAY);
+  if (days < 7) return `${days} day${days === 1 ? '' : 's'} ago`;
+  const weeks = Math.floor(days / 7);
+  if (weeks < 5) return `${weeks} week${weeks === 1 ? '' : 's'} ago`;
+  const months = Math.floor(days / 30);
+  return `${months} month${months === 1 ? '' : 's'} ago`;
+}
+
+/** '2H 30M' — the gap between two instants, as the flight header shows it. */
+export function formatDuration(fromDate: Date, toDate: Date): string | null {
+  const ms = toDate.getTime() - fromDate.getTime();
+  if (ms <= 0) return null;
+  const totalMinutes = Math.round(ms / 60_000);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours === 0) return `${minutes}M`;
+  if (minutes === 0) return `${hours}H`;
+  return `${hours}H ${minutes}M`;
+}

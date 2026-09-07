@@ -3,11 +3,15 @@ import { useState } from 'react';
 import { Platform, Pressable, View } from 'react-native';
 
 import { Text } from '@/components/ui/text';
-import { fromISODate, toISODate } from '@/lib/date';
+import { fromISODate, initialPickerDate, toISODate } from '@/lib/date';
 
 /**
  * Label + tappable field that opens the native date picker.
  * Value is a 'YYYY-MM-DD' calendar string, matching db/schema/trips.ts.
+ *
+ * `min`/`max` bound the selectable days and, just as usefully, decide which
+ * month opens first: with no value yet the picker starts on `min` rather than
+ * today, so adding something to a trip in November does not open on this month.
  */
 export function DateField({
   label,
@@ -15,6 +19,9 @@ export function DateField({
   onChange,
   placeholder = 'Pick a date',
   mode = 'date',
+  min = null,
+  max = null,
+  hint,
 }: {
   label: string;
   /** 'YYYY-MM-DD' in date mode, 'HH:MM' in time mode. */
@@ -22,8 +29,13 @@ export function DateField({
   onChange: (value: string | null) => void;
   placeholder?: string;
   mode?: 'date' | 'time';
+  /** 'YYYY-MM-DD' bounds. Ignored in time mode. */
+  min?: string | null;
+  max?: string | null;
+  hint?: string;
 }) {
   const [open, setOpen] = useState(false);
+  const bounded = mode === 'date';
 
   return (
     <View className="flex-1 gap-[7px]">
@@ -32,15 +44,21 @@ export function DateField({
         onPress={() => setOpen(true)}
         className="border-input bg-card rounded-md border px-4 py-[15px] active:opacity-80"
       >
-        <Text variant="mono" className={value ? 'text-foreground text-[15px]' : 'text-subtle text-[15px]'}>
+        <Text
+          variant="mono"
+          className={value ? 'text-foreground text-[15px]' : 'text-subtle text-[15px]'}
+        >
           {value ? (mode === 'time' ? value : formatShort(value)) : placeholder}
         </Text>
       </Pressable>
+      {hint ? <Text variant="caption">{hint}</Text> : null}
 
       {open ? (
         <DateTimePicker
-          value={pickerValue(value, mode)}
+          value={pickerValue(value, mode, min, max)}
           mode={mode}
+          minimumDate={bounded && min ? fromISODate(min) : undefined}
+          maximumDate={bounded && max ? fromISODate(max) : undefined}
           onChange={(event, picked) => {
             // Android dismisses itself; iOS keeps the picker mounted.
             setOpen(Platform.OS === 'ios' && event.type !== 'dismissed');
@@ -53,15 +71,19 @@ export function DateField({
   );
 }
 
-function pickerValue(value: string | null, mode: 'date' | 'time'): Date {
-  if (!value) return new Date();
+function pickerValue(
+  value: string | null,
+  mode: 'date' | 'time',
+  min: string | null,
+  max: string | null
+): Date {
   if (mode === 'time') {
-    const [h, m] = value.split(':').map(Number);
+    const [h, m] = (value ?? '').split(':').map(Number);
     const d = new Date();
-    d.setHours(h ?? 0, m ?? 0, 0, 0);
+    if (value) d.setHours(h ?? 0, m ?? 0, 0, 0);
     return d;
   }
-  return fromISODate(value);
+  return initialPickerDate(value, min, max);
 }
 
 function formatClock(date: Date): string {
